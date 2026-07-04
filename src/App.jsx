@@ -4,18 +4,20 @@ import Dashboard from './pages/Dashboard'
 import NewsFeed from './pages/NewsFeed'
 import SocialListening from './pages/SocialListening'
 import Analytics from './pages/Analytics'
+import Bookmarks from './pages/Bookmarks'
+import History from './pages/History'
+import Settings from './pages/Settings'
+import ErrorBoundary from './components/ErrorBoundary'
 import useThemeStore from './store/themeStore'
 import NotificationService from './api/notificationService'
 import './App.css'
 
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [showNotifications, setShowNotifications] = useState(false)
   const location = useLocation()
   const { theme, toggleTheme } = useThemeStore()
 
   useEffect(() => {
-    // Apply theme to document
     if (theme === 'dark') {
       document.documentElement.classList.add('dark')
     } else {
@@ -27,7 +29,10 @@ function AppContent() {
     { path: '/', label: 'Dashboard', icon: '📊' },
     { path: '/news', label: 'News Feed', icon: '📰' },
     { path: '/social', label: 'Social Listening', icon: '💬' },
-    { path: '/analytics', label: 'Analytics', icon: '📈' }
+    { path: '/analytics', label: 'Analytics', icon: '📈' },
+    { path: '/bookmarks', label: 'Bookmarks', icon: '📚' },
+    { path: '/history', label: 'History', icon: '📖' },
+    { path: '/settings', label: 'Settings', icon: '⚙️' }
   ]
 
   const isActive = (path) => location.pathname === path
@@ -42,7 +47,6 @@ function AppContent() {
         })
       }
     }
-    setShowNotifications(!showNotifications)
   }
 
   return (
@@ -58,7 +62,7 @@ function AppContent() {
       `}</style>
 
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b ${theme === 'dark' ? 'from-gray-900 to-gray-800' : 'from-gray-900 to-gray-800'} text-white transition-all duration-300 shadow-lg flex flex-col`}>
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-gray-900 to-gray-800 text-white transition-all duration-300 shadow-lg flex flex-col`}>
         <div className="p-4 flex items-center justify-between border-b border-gray-700">
           {sidebarOpen && <h1 className="text-lg font-bold">📰 News Monitor</h1>}
           <button 
@@ -72,7 +76,7 @@ function AppContent() {
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {menuItems.map(item => (
             <Link
               key={item.path}
@@ -102,7 +106,7 @@ function AppContent() {
           <button
             onClick={handleNotificationClick}
             className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm"
-            title="Toggle notifications"
+            title="Notifications"
           >
             <span className="text-xl">🔔</span>
             {sidebarOpen && <span>Notifications</span>}
@@ -111,13 +115,11 @@ function AppContent() {
 
         <div className="border-t border-gray-700 p-4">
           <div className={`flex items-center space-x-3 ${!sidebarOpen && 'justify-center'}`}>
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
-              NM
-            </div>
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold">NM</div>
             {sidebarOpen && (
               <div className="text-xs">
                 <div className="font-semibold">News Monitor</div>
-                <div className="text-gray-400">v2.0</div>
+                <div className="text-gray-400">v2.1</div>
               </div>
             )}
           </div>
@@ -132,20 +134,30 @@ function AppContent() {
               <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 {menuItems.find(item => item.path === location.pathname)?.label || 'Dashboard'}
               </h2>
-              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-1`}>Real-time news monitoring and social listening</p>
+              <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
+                Real-time news monitoring and social listening
+              </p>
             </div>
             <div className="flex items-center space-x-4">
-              <button className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-lg transition-colors`} title="Refresh">
+              <button
+                onClick={() => window.location.reload()}
+                className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-lg transition-colors`}
+                title="Refresh"
+              >
                 <svg className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                 </svg>
               </button>
-              <button className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-lg transition-colors`} title="Settings">
+              <Link
+                to="/settings"
+                className={`p-2 ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} rounded-lg transition-colors`}
+                title="Settings"
+              >
                 <svg className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -156,6 +168,9 @@ function AppContent() {
             <Route path="/news" element={<NewsFeed />} />
             <Route path="/social" element={<SocialListening />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/bookmarks" element={<Bookmarks />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
       </main>
@@ -165,9 +180,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <AppContent />
+      </Router>
+    </ErrorBoundary>
   )
 }
 

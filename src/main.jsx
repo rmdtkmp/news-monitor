@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter as Router } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import NotificationService from './api/notificationService.js'
 import DataService from './api/dataService.js'
 
@@ -16,12 +17,12 @@ if (savedSettings?.theme === 'dark') {
 }
 
 // Init notifications on app load (non-blocking)
-NotificationService.init().then(console.log('Notifications initialized'))
+NotificationService.init().then(() => console.log('Notifications initialized'))
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <Router>
+    <ErrorBoundary>
       <App />
-    </Router>
+    </ErrorBoundary>
   </StrictMode>,
 )
