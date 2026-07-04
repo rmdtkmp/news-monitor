@@ -8,6 +8,14 @@ const NewsCard = ({ article }) => {
   
   const isDark = theme === 'dark';
 
+  // Calculate reading time (200 words per minute)
+  const getReadingTime = () => {
+    const text = article.title + ' ' + (article.description || '');
+    const words = text.split(/\s+/).length;
+    const minutes = Math.ceil(words / 200);
+    return minutes < 1 ? '1 min' : `${minutes} min read`;
+  };
+
   const getSentimentColor = (sentiment) => {
     switch(sentiment) {
       case 'positive': return isDark ? 'bg-green-800 text-green-200' : 'bg-green-100 text-green-800';
@@ -40,16 +48,12 @@ const NewsCard = ({ article }) => {
     if (diffHours < 1) return 'Just now';
     if (diffHours < 24) return `${diffHours}h ago`;
     
-    return articleDate.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    });
+    return articleDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   const handleBookmark = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
     if (isBookmarked) {
       DataService.removeBookmark(article.id);
     } else {
@@ -60,6 +64,18 @@ const NewsCard = ({ article }) => {
 
   const handleClick = () => {
     DataService.addToHistory(article);
+  };
+
+  const handleShare = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (navigator.share) {
+      navigator.share({
+        title: article.title,
+        text: article.description,
+        url: article.url
+      });
+    }
   };
 
   const daysOld = article.daysOld;
@@ -79,13 +95,14 @@ const NewsCard = ({ article }) => {
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute top-2 right-2 flex space-x-1">
-          <button
-            onClick={handleBookmark}
-            className={`p-2 rounded-full ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-md`}
-            title={isBookmarked ? "Remove bookmark" : "Bookmark article"}
-          >
+          <button onClick={handleBookmark} className={`p-2 rounded-full ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-md`} title={isBookmarked ? "Remove bookmark" : "Bookmark article"}>
             {isBookmarked ? '🔖' : '📌'}
           </button>
+          {typeof navigator !== 'undefined' && navigator.share && (
+            <button onClick={handleShare} className={`p-2 rounded-full ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-md`} title="Share article">
+              📤
+            </button>
+          )}
         </div>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
           <div className="flex items-center justify-between">
@@ -111,6 +128,8 @@ const NewsCard = ({ article }) => {
             <span>{article.country}</span>
             <span>•</span>
             <span>{formatDate(article.published)}</span>
+            <span>•</span>
+            <span className="text-blue-400">{getReadingTime()}</span>
           </div>
           <div className="flex items-center space-x-3">
             <span className={`flex items-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
