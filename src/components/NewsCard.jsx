@@ -36,7 +36,10 @@ const NewsCard = ({ article }) => {
     if (daysOld === undefined || daysOld === null) return null;
     if (daysOld === 0) return 'Today';
     if (daysOld === 1) return '1 day ago';
-    return `${daysOld} days ago`;
+    if (daysOld < 7) return `${daysOld} days ago`;
+    if (daysOld < 30) return `${Math.floor(daysOld / 7)} week${daysOld >= 14 ? 's' : ''} ago`;
+    if (daysOld < 90) return `${Math.floor(daysOld / 30)} month${daysOld >= 60 ? 's' : ''} ago`;
+    return `${Math.floor(daysOld / 90)} quarter${daysOld >= 180 ? 's' : ''} ago`;
   };
 
   const formatDate = (date) => {

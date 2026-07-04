@@ -2,52 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>News Monitor - Global News Dashboard</title>
-    <meta name="description" content="Real-time global news monitoring dashboard covering 8 regions with RSS feeds, NewsAPI integration, dark mode, and offline support." />
-    <meta name="keywords" content="news monitoring, global news, RSS feeds, news dashboard, social listening, PWA" />
-    <meta name="author" content="rmdtkmp" />
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="News Monitor - Global News Dashboard" />
-    <meta property="og:description" content="Real-time global news monitoring dashboard covering 8 regions." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://rmdtkmp.github.io/news-monitor/" />
-    <meta property="og:image" content="/pwa-512x512.png" />
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="News Monitor - Global News Dashboard" />
-    <meta name="twitter:description" content="Real-time global news monitoring dashboard." />
-    <meta name="twitter:image" content="/pwa-512x512.png" />
-    
-    <!-- Theme Color -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#2563eb" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="News Monitor" />
-    
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json" />
+    <meta name="description" content="Real-time global news monitoring dashboard with 8 regions coverage" />
+    <link rel="icon" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/pwa-192x192.png" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    
-    <!-- Preconnect -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            fontFamily: { sans: ['Inter', 'sans-serif'] }
-          }
-        }
-      }
-    </script>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>News Monitor - Global News Dashboard</title>
   </head>
   <body>
     <div id="root"></div>

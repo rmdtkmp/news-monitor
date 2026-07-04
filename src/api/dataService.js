@@ -17,11 +17,13 @@ class DataService {
         notifications: true,
         regions: ['Global', 'Indonesia', 'SEA'],
         autoRefresh: true,
-        refreshInterval: 300000, // 5 minutes
+        refreshInterval: 300000,
         showImages: true,
         defaultView: 'dashboard',
         language: 'en',
-        dateRange: '7days', // 7-day crawling default
+        dateRange: '7days',
+        crawlDuration: '7days',
+        maxArticles: 100,
         useTopHeadlines: true,
         useEverythingEndpoint: true
       };
@@ -251,6 +253,8 @@ class DataService {
       last24h: 0,
       last3d: 0,
       last7d: 0,
+      last30d: 0,
+      last90d: 0,
       older: 0
     };
 
@@ -264,10 +268,114 @@ class DataService {
       if (diffDays <= 1) distribution.last24h++;
       else if (diffDays <= 3) distribution.last3d++;
       else if (diffDays <= 7) distribution.last7d++;
+      else if (diffDays <= 30) distribution.last30d++;
+      else if (diffDays <= 90) distribution.last90d++;
       else distribution.older++;
     });
 
     return distribution;
+  }
+
+  // Fetch articles from last X days
+  async fetchNewsExtended(region = 'Global', days = 100, category = 'general') {
+    const allArticles = [];
+    const settings = this.getSettings() || {};
+    const maxArticles = settings.maxArticles || 100;
+    
+    const regionConfig = REGIONS[region];
+    if (!regionConfig) return [];
+
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date(endDate.getTime() - (days * 24 * 60 * 60 * 1000));
+    
+    // Chunk fetching by week to respect API limits
+    const chunkSize = 7;
+    const totalChunks = Math.ceil(days / chunkSize);
+    
+    for (let i = 0; i < totalChunks; i++) {
+      const chunkStart = new Date(startDate.getTime() + (i * chunkSize * 24 * 60 * 60 * 1000));
+      const chunkEnd = new Date(Math.min(chunkStart.getTime() + (chunkSize * 24 * 60 * 60 * 1000), endDate.getTime()));
+      
+      for (const country of regionConfig.countries) {
+        try {
+          const articles = await NewsService.searchArticles(
+            `publishedAt:>${chunkStart.toISOString().split('T')[0]} AND publishedAt:<${chunkEnd.toISOString().split('T')[0]}`,
+            country,
+            'publishedAt',
+            days
+          );
+          allArticles.push(...articles);
+        } catch (error) {
+          console.log(`Failed to fetch ${country} for chunk ${i + 1}`);
+        }
+        
+      }
+    }
+
+    // Remove duplicates
+    const uniqueArticles = [];
+    const seenUrls = new Set();
+    
+    for (const article of allArticles) {
+      if (article && article.url && !seenUrls.has(article.url)) {
+        seenUrls.add(article.url);
+        uniqueArticles.push(article);
+      }
+    }
+
+    // Sort and limit
+    return uniqueArticles
+      .sort((a, b) => new Date(b.published) - new Date(a.published))
+      .slice(0, maxArticles);
+  }
+
+  // Get comprehensive reading stats
+  getExtendedReadingStats(days = 100) {
+    const history = this.getHistory();
+    const bookmarks = this.getBookmarks();
+    
+    const cutoffDate = new Date(Date.now() - (days * 24 * 60 * 60 * 1000));
+    
+    return {
+      totalArticlesRead: history.length,
+      articlesReadLast100Days: history.filter(h => new Date(h.viewedAt) >= cutoffDate).length,
+      totalBookmarks: bookmarks.length,
+      bookmarksLast100Days: bookmarks.filter(b => new Date(b.bookmarkedAt) >= cutoffDate).length,
+      favoriteSource: this.getFavoriteSource(history),
+      readingTime: this.calculateReadingTime(history),
+      engagementScore: history.reduce((sum, h) => sum + (h.engagement || 0), 0),
+      topRegions: this.getTopRegions(history),
+      trendingTopics: this.getTrendingTopics(history)
+    };
+  }
+
+  getTopRegions(history, limit = 5) {
+    const regionCount = {};
+    history.forEach(item => {
+      const region = item.region || 'Unknown';
+      regionCount[region] = (regionCount[region] || 0) + 1;
+    });
+    return Object.entries(regionCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([region, count]) => ({ region, count }));
+  }
+
+  getTrendingTopics(history, limit = 10) {
+    const topicCount = {};
+    history.forEach(item => {
+      const topics = item.categories || [item.category] || ['general'];
+      topics.forEach(topic => {
+        if (topic) {
+          topicCount[topic] = (topicCount[topic] || 0) + 1;
+        }
+      });
+    });
+    return Object.entries(topicCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([topic, count]) => ({ topic, count }));
   }
 }
 
