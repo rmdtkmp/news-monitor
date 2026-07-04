@@ -28,7 +28,6 @@ const History = () => {
 
   const filterHistory = () => {
     let filtered = [...history];
-
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(h => 

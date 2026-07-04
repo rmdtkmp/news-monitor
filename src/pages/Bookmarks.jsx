@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import NewsCard from '../components/NewsCard.jsx';
+import ExportBookmarks from '../components/ExportBookmarks.jsx';
 import useThemeStore from '../store/themeStore.js';
 import DataService from '../api/dataService.js';
 
@@ -10,6 +11,7 @@ const Bookmarks = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [showExport, setShowExport] = useState(false);
 
   const isDark = theme === 'dark';
 
@@ -95,19 +97,33 @@ const Bookmarks = () => {
           </p>
         </div>
 
-        {bookmarks.length > 0 && (
-          <button
-            onClick={handleClearAll}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              isDark 
-                ? 'bg-red-900 text-red-200 hover:bg-red-800' 
-                : 'bg-red-100 text-red-700 hover:bg-red-200'
-            }`}
-          >
-            🗑️ Clear All
-          </button>
-        )}
+        <div className="flex gap-2">
+          {bookmarks.length > 0 && (
+            <>
+              <button
+                onClick={() => setShowExport(!showExport)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isDark ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
+              >
+                📤 Export
+              </button>
+              <button
+                onClick={handleClearAll}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isDark 
+                    ? 'bg-red-900 text-red-200 hover:bg-red-800' 
+                    : 'bg-red-100 text-red-700 hover:bg-red-200'
+                }`}
+              >
+                🗑️ Clear All
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
+      {showExport && <ExportBookmarks />}
 
       {bookmarks.length === 0 ? (
         <div className={`text-center py-12 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
