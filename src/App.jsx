@@ -1,128 +1,108 @@
-import { useState, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
+import Dashboard from './pages/Dashboard'
+import NewsFeed from './pages/NewsFeed'
+import SocialListening from './pages/SocialListening'
+import Analytics from './pages/Analytics'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
-  const [isInstalled, setIsInstalled] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const location = useLocation()
 
-  useEffect(() => {
-    // Listen for the beforeinstallprompt event
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault()
-      setDeferredPrompt(e)
-    }
+  const menuItems = [
+    { path: '/', label: 'Dashboard', icon: '📊' },
+    { path: '/news', label: 'News Feed', icon: '📰' },
+    { path: '/social', label: 'Social Listening', icon: '💬' },
+    { path: '/analytics', label: 'Analytics', icon: '📈' }
+  ]
 
-    // Check if app is already installed
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    window.addEventListener('appinstalled', () => setIsInstalled(true))
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-      window.removeEventListener('appinstalled', () => setIsInstalled(true))
-    }
-  }, [])
-
-  const handleInstall = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt()
-      const { outcome } = await deferredPrompt.userChoice
-      if (outcome === 'accepted') {
-        setIsInstalled(true)
-      }
-      setDeferredPrompt(null)
-    }
-  }
+  const isActive = (path) => location.pathname === path
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-        </div>
-        <div>
-          <h1>Welcome to PWA</h1>
-          <p>
-            This is a Progressive Web App built with <code>Vite + React</code>
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="counter"
-            onClick={() => setCount((count) => count + 1)}
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-gray-900 to-gray-800 text-white transition-all duration-300 shadow-lg flex flex-col`}>
+        <div className="p-4 flex items-center justify-between border-b border-gray-700">
+          {sidebarOpen && <h1 className="text-lg font-bold">News Monitor</h1>}
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
           >
-            Count is {count}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
           </button>
+        </div>
 
-          {deferredPrompt && !isInstalled && (
-            <button
-              type="button"
-              className="counter"
-              onClick={handleInstall}
-              style={{ backgroundColor: '#4CAF50' }}
+        <nav className="flex-1 p-4 space-y-2">
+          {menuItems.map(item => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                isActive(item.path)
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-300 hover:bg-gray-700'
+              }`}
             >
-              📱 Install App
-            </button>
-          )}
+              <span className="text-xl">{item.icon}</span>
+              {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
+            </Link>
+          ))}
+        </nav>
 
-          {isInstalled && (
-            <button
-              type="button"
-              className="counter"
-              disabled
-              style={{ backgroundColor: '#ccc' }}
-            >
-              ✅ App Installed
-            </button>
-          )}
+        <div className="border-t border-gray-700 p-4">
+          <div className={`flex items-center space-x-3 ${!sidebarOpen && 'justify-center'}`}>
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
+              NM
+            </div>
+            {sidebarOpen && (
+              <div className="text-xs">
+                <div className="font-semibold">News Monitor</div>
+                <div className="text-gray-400">v1.0</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+          <div className="px-6 py-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                {menuItems.find(item => item.path === location.pathname)?.label || 'Dashboard'}
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">Real-time news monitoring and social listening</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                </svg>
+              </button>
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
-          <h3>PWA Features:</h3>
-          <ul style={{ textAlign: 'left', margin: '0 auto', maxWidth: '400px' }}>
-            <li>✨ Installable on home screen</li>
-            <li>🔄 Works offline (service worker enabled)</li>
-            <li>⚡ Fast loading with caching</li>
-            <li>📱 Mobile-optimized experience</li>
-            <li>🔔 Ready for push notifications</li>
-          </ul>
+        <div className="p-6">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/news" element={<NewsFeed />} />
+            <Route path="/social" element={<SocialListening />} />
+            <Route path="/analytics" element={<Analytics />} />
+          </Routes>
         </div>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <h2>Get Started</h2>
-          <p>Learn more about PWA development</p>
-          <ul>
-            <li>
-              <a href="https://web.dev/progressive-web-apps/" target="_blank" rel="noopener noreferrer">
-                📖 PWA Documentation
-              </a>
-            </li>
-            <li>
-              <a href="https://vite.dev/" target="_blank" rel="noopener noreferrer">
-                ⚡ Vite Documentation
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank" rel="noopener noreferrer">
-                ⚛️ React Documentation
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      </main>
+    </div>
   )
 }
 
