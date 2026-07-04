@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import useThemeStore from '../store/themeStore.js';
 import DataService from '../api/dataService.js';
 
@@ -15,6 +14,21 @@ const NewsCard = ({ article }) => {
       case 'negative': return isDark ? 'bg-red-800 text-red-200' : 'bg-red-100 text-red-800';
       default: return isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const getAgeBadgeColor = (daysOld) => {
+    if (daysOld === undefined || daysOld === null) return '';
+    if (daysOld <= 1) return isDark ? 'bg-blue-700 text-blue-200' : 'bg-blue-100 text-blue-800';
+    if (daysOld <= 3) return isDark ? 'bg-purple-700 text-purple-200' : 'bg-purple-100 text-purple-800';
+    if (daysOld <= 7) return isDark ? 'bg-orange-700 text-orange-200' : 'bg-orange-100 text-orange-800';
+    return isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700';
+  };
+
+  const formatAge = (daysOld) => {
+    if (daysOld === undefined || daysOld === null) return null;
+    if (daysOld === 0) return 'Today';
+    if (daysOld === 1) return '1 day ago';
+    return `${daysOld} days ago`;
   };
 
   const formatDate = (date) => {
@@ -48,6 +62,8 @@ const NewsCard = ({ article }) => {
     DataService.addToHistory(article);
   };
 
+  const daysOld = article.daysOld;
+
   return (
     <a 
       href={article.url} 
@@ -71,12 +87,19 @@ const NewsCard = ({ article }) => {
             {isBookmarked ? '🔖' : '📌'}
           </button>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-2">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-white">{article.source}</span>
-            <span className={`text-xs px-2 py-1 rounded-full ${getSentimentColor(article.sentiment)}`}>
-              {article.sentiment}
-            </span>
+            <div className="flex items-center space-x-1">
+              {daysOld !== undefined && (
+                <span className={`text-xs px-2 py-0.5 rounded-full ${getAgeBadgeColor(daysOld)}`}>
+                  {formatAge(daysOld)}
+                </span>
+              )}
+              <span className={`text-xs px-2 py-1 rounded-full ${getSentimentColor(article.sentiment)}`}>
+                {article.sentiment}
+              </span>
+            </div>
           </div>
         </div>
       </div>

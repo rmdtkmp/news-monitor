@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import NewsCard from '../components/NewsCard.jsx';
-import PostCard from '../components/PostCard.jsx';
 import useThemeStore from '../store/themeStore.js';
 import DataService from '../api/dataService.js';
 import { REGIONS } from '../api/newsService.js';
@@ -35,8 +34,6 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-    
-    // Set up auto-refresh every 5 minutes
     const interval = setInterval(fetchDashboardData, 300000);
     return () => clearInterval(interval);
   }, [selectedRegion, selectedCategory]);
@@ -60,6 +57,11 @@ const Dashboard = () => {
     setLoading(false);
   };
 
+  // Article age distribution
+  const ageDistribution = useMemo(() => {
+    return DataService.getArticleAgeDistribution(articles);
+  }, [articles]);
+
   const trending = [
     { topic: "Technology", count: 145, trend: "up" },
     { topic: "Economy", count: 98, trend: "up" },
@@ -69,7 +71,7 @@ const Dashboard = () => {
   ];
 
   const statCards = [
-    { label: "Articles Today", value: stats.articlesToday, icon: "📰", color: "bg-gradient-to-br from-blue-500 to-blue-600" },
+    { label: "Articles (7 days)", value: stats.articlesToday, icon: "📰", color: "bg-gradient-to-br from-blue-500 to-blue-600" },
     { label: "Social Mentions", value: stats.mentions, icon: "💬", color: "bg-gradient-to-br from-purple-500 to-purple-600" },
     { label: "Total Engagement", value: stats.engagement, icon: "🔥", color: "bg-gradient-to-br from-orange-500 to-orange-600" },
     { label: "Sources Tracked", value: stats.sources, icon: "🌐", color: "bg-gradient-to-br from-green-500 to-green-600" }
@@ -88,7 +90,7 @@ const Dashboard = () => {
             }`}
           >
             {regions.map(r => (
-              <option key={r} value={r}>{r}</option>
+              <option key={r} value={r}>{r === 'SEA' ? 'Southeast Asia' : r}</option>
             ))}
           </select>
           <select
@@ -105,24 +107,59 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Article Age Distribution */}
+      <div className={`rounded-xl shadow-md p-4 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+        <h2 className={`text-lg font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          📊 Publication Age Distribution (Last 7 Days)
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className={`p-3 rounded-lg ${isDark ? 'bg-blue-900' : 'bg-blue-100'}`}>
+            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-blue-800'}`}>
+              {ageDistribution.last24h}
+            </div>
+            <div className={`text-xs ${isDark ? 'text-blue-200' : 'text-blue-700'}`}>Last 24h</div>
+          </div>
+          <div className={`p-3 rounded-lg ${isDark ? 'bg-purple-900' : 'bg-purple-100'}`}>
+            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-purple-800'}`}>
+              {ageDistribution.last3d}
+            </div>
+            <div className={`text-xs ${isDark ? 'text-purple-200' : 'text-purple-700'}`}>Days 2-3</div>
+          </div>
+          <div className={`p-3 rounded-lg ${isDark ? 'bg-orange-900' : 'bg-orange-100'}`}>
+            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-orange-800'}`}>
+              {ageDistribution.last7d}
+            </div>
+            <div className={`text-xs ${isDark ? 'text-orange-200' : 'text-orange-700'}`}>Days 4-7</div>
+          </div>
+          <div className={`p-3 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-700'}`}>
+              {ageDistribution.older}
+            </div>
+            <div className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Older</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat, i) => (
           <StatCard key={i} {...stat} />
         ))}
       </div>
 
+      {/* Latest News Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <div className={`rounded-xl shadow-md p-4 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Latest News</h2>
+              <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Latest News (7 Days)</h2>
               <Link to="/news" className="text-blue-400 text-sm hover:underline">View All</Link>
             </div>
             
             {loading ? (
               <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                 <div className="inline-block animate-spin">⏳</div>
-                <p className="mt-2">Loading articles...</p>
+                <p className="mt-2">Loading articles from last 7 days...</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -134,6 +171,7 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Trending & Quick Stats */}
         <div className="space-y-6">
           <div className={`rounded-xl shadow-md p-4 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center justify-between mb-4">
@@ -161,12 +199,16 @@ const Dashboard = () => {
             </div>
             <div className="space-y-2 text-sm">
               <div className={`flex justify-between ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                <span>Time Range:</span>
+                <span className="text-blue-400 font-medium">Last 7 Days</span>
+              </div>
+              <div className={`flex justify-between ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                 <span>Last Updated:</span>
                 <span>{new Date().toLocaleTimeString()}</span>
               </div>
               <div className={`flex justify-between ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                 <span>Region:</span>
-                <span>{selectedRegion}</span>
+                <span>{selectedRegion === 'SEA' ? 'Southeast Asia' : selectedRegion}</span>
               </div>
               <div className={`flex justify-between ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                 <span>Category:</span>

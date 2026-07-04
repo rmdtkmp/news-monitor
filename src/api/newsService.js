@@ -23,6 +23,76 @@ class NewsService {
     this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
   }
 
+  getDateRange() {
+    const today = new Date();
+    const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    const formatDate = (date) => date.toISOString().split('T')[0];
+    
+    return {
+      from: formatDate(sevenDaysAgo),
+      to: formatDate(today)
+    };
+  }
+
+  async getArticlesFromLastSevenDays(region = 'us', category = 'general') {
+    const cacheKey = `articles_7days_${region}_${category}`;
+    
+    if (this.cache.has(cacheKey)) {
+      const { data, timestamp } = this.cache.get(cacheKey);
+      if (Date.now() - timestamp < this.cacheTimeout) {
+        return data;
+      }
+    }
+
+    try {
+      const { from, to } = this.getDateRange();
+      
+      // Build search query for region
+      const regionCountries = REGIONS[this.getRegionFromCountry(region)]?.countries || [region];
+      const countryCodes = regionCountries.join(' OR ');
+      
+      const response = await axios.get(`${NEWS_API_URL}/everything`, {
+        params: {
+          q: 'news',
+          countries: countryCodes,
+          category: category,
+          from: from,
+          to: to,
+          sortBy: 'publishedAt',
+          language: this.getLanguageCode(region),
+          apiKey: NEWS_API_KEY,
+          pageSize: 100
+        },
+        timeout: 15000
+      });
+
+      const articles = response.data.articles.map(article => ({
+        id: article.url,
+        title: article.title,
+        source: article.source.name,
+        region: this.getRegionFromCountry(region),
+        country: region.toUpperCase(),
+        category: category,
+        sentiment: this.analyzeSentiment(article.title + ' ' + (article.description || '')),
+        published: new Date(article.publishedAt),
+        url: article.url,
+        image: article.urlToImage || 'https://via.placeholder.com/300x200?text=News',
+        description: article.description || 'No description available',
+        content: article.content,
+        mentions: Math.floor(Math.random() * 5000),
+        engagement: Math.floor(Math.random() * 10000),
+        daysOld: this.calculateDaysOld(new Date(article.publishedAt))
+      }));
+
+      this.cache.set(cacheKey, { data: articles, timestamp: Date.now() });
+      return articles;
+    } catch (error) {
+      console.error('Error fetching 7-day articles:', error);
+      return [];
+    }
+  }
+
   async getTopHeadlines(region = 'us', category = 'general') {
     const cacheKey = `headlines_${region}_${category}`;
     
@@ -69,18 +139,21 @@ class NewsService {
     }
   }
 
-  async searchArticles(query, region = 'us', sortBy = 'relevancy') {
+  async searchArticles(query, region = 'us', sortBy = 'relevancy', days = 7) {
     try {
+      const { from } = this.getDateRange();
+      
       const response = await axios.get(`${NEWS_API_URL}/everything`, {
         params: {
           q: query,
+          from: from,
           sortBy: sortBy,
           language: this.getLanguageCode(region),
           apiKey: NEWS_API_KEY,
-          pageSize: 50,
+          pageSize: 100,
           page: 1
         },
-        timeout: 10000
+        timeout: 15000
       });
 
       return response.data.articles.map(article => ({
@@ -97,12 +170,20 @@ class NewsService {
         description: article.description || 'No description available',
         content: article.content,
         mentions: Math.floor(Math.random() * 5000),
-        engagement: Math.floor(Math.random() * 10000)
+        engagement: Math.floor(Math.random() * 10000),
+        daysOld: this.calculateDaysOld(new Date(article.publishedAt))
       }));
     } catch (error) {
       console.error('Error searching articles:', error);
       return [];
     }
+  }
+
+  calculateDaysOld(publishDate) {
+    const now = new Date();
+    const diffMs = now.getTime() - publishDate.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    return diffDays;
   }
 
   analyzeSentiment(text) {
@@ -129,8 +210,8 @@ class NewsService {
 
   getLanguageCode(country) {
     const langMap = {
-      id: 'id', // Indonesian
-      en: 'en', // English
+      id: 'id',
+      en: 'en',
       default: 'en'
     };
     return langMap[country] || langMap.default;

@@ -20,7 +20,10 @@ class DataService {
         refreshInterval: 300000, // 5 minutes
         showImages: true,
         defaultView: 'dashboard',
-        language: 'en'
+        language: 'en',
+        dateRange: '7days', // 7-day crawling default
+        useTopHeadlines: true,
+        useEverythingEndpoint: true
       };
       this.saveSettings(defaultSettings);
     }
@@ -28,16 +31,36 @@ class DataService {
 
   async fetchNews(region = 'Global', category = 'general', useAPI = true, useRSS = true) {
     const articles = [];
+    const settings = this.getSettings();
     
     if (useAPI) {
       const regionConfig = REGIONS[region];
       if (regionConfig) {
-        const apiArticles = await Promise.all(
-          regionConfig.countries.map(country => 
-            NewsService.getTopHeadlines(country, category)
-          )
-        );
-        articles.push(...apiArticles.flat());
+        let apiArticles = [];
+        
+        // Check which endpoints to use
+        if (settings?.useTopHeadlines !== false) {
+          const headlines = await Promise.all(
+            regionConfig.countries.map(country => 
+              NewsService.getTopHeadlines(country, category)
+            )
+          );
+          apiArticles.push(...headlines.flat());
+        }
+        
+        // Use /everything endpoint for 7-day historical data
+        if (settings?.useEverythingEndpoint !== false && (settings?.dateRange === '7days' || settings?.dateRange === 'all')) {
+          for (const country of regionConfig.countries) {
+            try {
+              const everythingArticles = await NewsService.getArticlesFromLastSevenDays(country, category);
+              apiArticles.push(...everythingArticles);
+            } catch (error) {
+              console.log(`7-day crawl failed for ${country}, using headlines only`);
+            }
+          }
+        }
+        
+        articles.push(...apiArticles);
       }
     }
 
@@ -57,7 +80,7 @@ class DataService {
       }
     }
 
-    // Sort by date
+    // Sort by date (newest first)
     return uniqueArticles.sort((a, b) => new Date(b.published) - new Date(a.published));
   }
 
@@ -74,7 +97,7 @@ class DataService {
 
   async searchAll(query, region = 'Global') {
     try {
-      const apiResults = await NewsService.searchArticles(query, REGIONS[region]?.code || 'us');
+      const apiResults = await NewsService.searchArticles(query, REGIONS[region]?.code || 'us', 'relevancy', 7);
       const allArticles = [];
       
       for (const regionKey of Object.keys(REGIONS)) {
@@ -188,14 +211,21 @@ class DataService {
     console.log('All caches cleared');
   }
 
-  // Statistics
+  // Statistics with 7-day focus
   getReadingStats() {
     const history = this.getHistory();
     const bookmarks = this.getBookmarks();
     
+    // Calculate 7-day stats
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recentHistory = history.filter(item => new Date(item.viewedAt) >= sevenDaysAgo);
+    const recentBookmarks = bookmarks.filter(item => new Date(item.bookmarkedAt) >= sevenDaysAgo);
+    
     return {
       totalArticlesRead: history.length,
+      recentArticlesRead: recentHistory.length,
       totalBookmarks: bookmarks.length,
+      recentBookmarks: recentBookmarks.length,
       favoriteSource: this.getFavoriteSource(history),
       readingTime: this.calculateReadingTime(history)
     };
@@ -213,6 +243,31 @@ class DataService {
   calculateReadingTime(history) {
     const avgReadingTimePerArticle = 3; // minutes
     return history.length * avgReadingTimePerArticle;
+  }
+
+  // Article age analysis
+  getArticleAgeDistribution(articles) {
+    const distribution = {
+      last24h: 0,
+      last3d: 0,
+      last7d: 0,
+      older: 0
+    };
+
+    const now = new Date();
+    
+    articles.forEach(article => {
+      const publishDate = new Date(article.published);
+      const diffMs = now.getTime() - publishDate.getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      
+      if (diffDays <= 1) distribution.last24h++;
+      else if (diffDays <= 3) distribution.last3d++;
+      else if (diffDays <= 7) distribution.last7d++;
+      else distribution.older++;
+    });
+
+    return distribution;
   }
 }
 
