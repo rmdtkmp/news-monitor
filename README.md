@@ -1,16 +1,211 @@
-# React + Vite
+# 🌐 News Monitoring PWA Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A Progressive Web App for real-time news monitoring and social listening with global coverage across 8 regions.
 
-Currently, two official plugins are available:
+**Live Demo:** [https://newsmonitor-pro.loca.lt](https://newsmonitor-pro.loca.lt)  
+**GitHub:** [https://github.com/rmdtkmp/pwa-starter](https://github.com/rmdtkmp/pwa-starter)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Features
 
-## React Compiler
+### 📊 Dashboard Features
+- **8 Regional Coverage** - Global, Indonesia, SEA, Asia, Europe, Americas, Africa, Middle East
+- **Real News API** - [NewsAPI.org](https://newsapi.org) integration
+- **RSS Feeds** - 25+ news sources (BBC, CNN, Reuters, Jakarta Post, Kompas, etc.)
+- **Push Notifications** - Breaking news alerts
+- **Dark Mode** - Toggle with persistent settings
+- **Data Persistence** - Bookmarks, reading history, preferences (localStorage)
+- **Offline Support** - Service worker caching
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 📱 Pages
+1. **Dashboard** - Overview stats, trending topics, latest news preview
+2. **News Feed** - Filter by region/category, search, bookmark articles
+3. **Social Listening** - Sentiment analysis, platform filtering (mock data)
+4. **Analytics** - Charts, trends, source rankings
 
-## Expanding the Oxlint configuration
+## 🛠 Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- **React 19** - Frontend framework
+- **Vite 8** - Build tool + dev server
+- **Tailwind CSS** - Styling
+- **React Router** - Navigation
+- **Zustand** - State management
+- **Recharts** - Data visualization
+- **vite-plugin-pwa** - PWA features (service worker, manifest)
+
+## 🏃‍♂️ Quick Start
+
+### 1. Clone & Setup
+```bash
+git clone https://github.com/rmdtkmp/pwa-starter.git
+cd pwa-starter
+npm install
+```
+
+### 2. Configure API Key (Optional)
+```bash
+cp .env.example .env
+# Edit .env and add your NewsAPI key:
+# VITE_NEWS_API_KEY=your_key_here
+```
+
+Get free API key from: [newsapi.org/register](https://newsapi.org/register)
+
+### 3. Run Development Server
+```bash
+npm run dev
+# Open http://localhost:5173
+```
+
+### 4. Build for Production
+```bash
+npm run build
+npm run preview
+```
+
+## 📡 Regions & Sources
+
+### News API Coverage
+| Region | Countries | Categories |
+|---|---|---|
+| **Global** | US, UK, AU | business, tech, sports, etc. |
+| **Indonesia** | ID | Local & national news |
+| **Southeast Asia** | SG, MY, PH, TH, VN | Regional coverage |
+| **Asia** | CN, IN, JP, KR | Major Asian markets |
+| **Europe** | DE, FR, GB, IT, ES | European markets |
+| **Americas** | US, CA, BR, MX | North & South America |
+| **Africa** | ZA, EG, NG, KE | African continent |
+| **Middle East** | AE, SA, IL, TR | Middle Eastern news |
+
+### RSS Feed Sources
+- **Global**: BBC News, CNN, Reuters, AP News
+- **Indonesia**: Jakarta Post, Kompas, Detik
+- **Southeast Asia**: Channel NewsAsia, Bangkok Post
+- **Asia**: SCMP, Japan Times, The Hindu
+- **Europe**: The Guardian, DW News, Euronews
+- **Americas**: NY Times, Folha, Globo
+- **Middle East**: Al Jazeera, Times of Israel
+- **Africa**: Daily Maverick, The Citizen
+
+## 🔧 API Integration
+
+### NewsAPI Service
+```javascript
+// Fetch headlines for region
+import DataService from './api/dataService';
+const articles = await DataService.fetchNews('Indonesia', 'technology');
+
+// Search across all regions
+const results = await DataService.searchAll('crypto', 'Global');
+```
+
+### Data Persistence
+```javascript
+// Bookmarks
+DataService.addBookmark(article);
+DataService.getBookmarks();
+
+// History
+DataService.addToHistory(article);
+DataService.getHistory();
+
+// Settings
+DataService.updateSettings({ theme: 'dark', notifications: true });
+```
+
+## 🎨 Styling & Themes
+
+### Dark Mode Implementation
+```jsx
+import useThemeStore from './store/themeStore';
+const { theme, toggleTheme } = useThemeStore();
+
+<div className={`${theme === 'dark' ? 'dark' : ''}`}>
+  <button onClick={toggleTheme}>
+    {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+  </button>
+</div>
+```
+
+## 📦 PWA Features
+
+### Install Prompt
+- **Desktop Chrome**: Click install icon in address bar
+- **Mobile**: "Add to Home Screen" from browser menu
+- **Offline**: Cached assets work without internet
+
+### Service Worker
+Auto-generated by `vite-plugin-pwa`:
+- Cache-first strategy for static assets
+- Network-first for API calls
+- Background sync ready
+
+## 🚀 Deployment
+
+### GitHub Codespaces
+1. Open repository in GitHub
+2. Click "Code" → "Codespaces" → "Open new codespace"
+3. Run `npm install` then `npm run dev`
+
+### Vercel / Netlify
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel --prod
+
+# Or connect GitHub repo for auto-deploy
+```
+
+### Build Output
+- `dist/` folder contains production build
+- Service worker: `dist/sw.js`
+- Manifest: `dist/manifest.webmanifest`
+
+## 📝 Environment Variables
+
+```env
+VITE_NEWS_API_KEY=your_newsapi_key_here  # Optional, falls back to RSS feeds
+VITE_CUSTOM_RSS_FEEDS=[]                 # Custom RSS feeds as JSON array
+```
+
+## 🎯 Performance
+
+### Bundle Size
+- Production build: ~700kB gzipped
+- Code splitting: Dynamic imports for charts
+- Lazy loading: Components loaded on demand
+
+### Optimization
+- **Image optimization**: Placeholders for missing images
+- **Code splitting**: Route-based chunking
+- **Tree shaking**: Unused code removed in production
+
+## 🔗 Links
+
+- **GitHub Repository**: [github.com/rmdtkmp/pwa-starter](https://github.com/rmdtkmp/pwa-starter)
+- **News API Docs**: [newsapi.org/docs](https://newsapi.org/docs)
+- **Vite PWA Plugin**: [github.com/vite-pwa/vite-plugin-pwa](https://github.com/vite-pwa/vite-plugin-pwa)
+- **Tailwind CSS**: [tailwindcss.com](https://tailwindcss.com)
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 🙏 Credits
+
+- **NewsAPI.org** for providing free news data
+- **Vite** team for excellent build tool
+- **React** community for component ecosystem
+
+---
+
+**⭐ Star this repo if you find it useful!**
